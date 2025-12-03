@@ -69,9 +69,41 @@
             box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
         }
     </style>
+	<style>
+      .peer-tool-banner {
+        background-color: #003366;
+        color: white;
+        text-align: center;
+        padding: 15px;
+        font-family: 'Inter', sans-serif; /* Matched to your website font */
+        font-size: 16px;
+        font-weight: 500;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        position: relative;
+        z-index: 50; /* High z-index to stay on top */
+      }
+      .peer-tool-banner a {
+        color: #fbbf24; /* Amber-400 (Gold) matches Tailwind palette */
+        text-decoration: underline;
+        font-weight: bold;
+        margin-left: 10px;
+        transition: color 0.2s;
+      }
+      .peer-tool-banner a:hover {
+        color: #ffffff;
+        text-decoration: none;
+      }
+    </style>
     <!-- SEO: Add JSON-LD Schema for ScholarlyArticle and Datasets here -->
 </head>
 <body>
+<div class="peer-tool-banner">
+      🚀 <strong>New Feature:</strong> Use our new interactive tool to find comparable firms.
+      <a href="peer_tool.html">Launch Peer Finding Tool &rarr;</a>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm sticky top-0 z-50">
 
     <div class="container mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Header & Navigation -->
