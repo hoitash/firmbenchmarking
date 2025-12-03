@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Peer Finding Tool | Firm Benchmarking</title>
+    
+    <!-- Using Tailwind CSS to match your main website -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- PapaParse for CSV processing -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc; /* slate-50 */
+            color: #334155; /* slate-700 */
+        }
+        
+        /* Custom Scrollbar for dropdown */
+        .suggestions-list::-webkit-scrollbar {
+            width: 8px;
+        }
+        .suggestions-list::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        .suggestions-list::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        .suggestions-list::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- Navigation (Matches your Index page) -->
+    <nav class="bg-white shadow-sm sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="index.html" class="flex-shrink-0 flex items-center">
+                        <span class="text-xl font-bold text-slate-800 tracking-tight">Firm<span class="text-blue-600">Benchmarking</span></span>
+                    </a>
+                </div>
+                <div class="flex items-center">
+                    <a href="index.html" class="text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors">
+                        &larr; Back to Home
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        
+        <div class="max-w-3xl mx-auto">
+            <div class="text-center mb-10">
+                <h1 class="text-3xl md:text-4xl font-extrabold text-slate-900 mb-4">
+                    Find Closest Peers
+                </h1>
+                <p class="text-lg text-slate-600 max-w-2xl mx-auto">
+                    Search for a company to instantly view its top 10 comparable firms based on our Financial Statement Benchmarking (FSB) algorithms.
+                </p>
+            </div>
+
+            <!-- Search Box Card -->
+            <div class="bg-white rounded-xl shadow-lg p-6 md:p-8 mb-8 relative">
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <svg class="h-5 w-5 text-slate-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <input type="text" id="companyInput" 
+                        class="block w-full pl-11 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-lg text-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none disabled:opacity-60 disabled:cursor-not-allowed" 
+                        placeholder="Start typing company name..." 
+                        autocomplete="off" 
+                        disabled>
+                    
+                    <!-- Suggestions Dropdown -->
+                    <div id="suggestionsList" class="suggestions-list absolute w-full bg-white mt-2 rounded-lg shadow-xl border border-slate-100 max-h-60 overflow-y-auto hidden z-50"></div>
+                </div>
+
+                <!-- Status Messages -->
+                <div id="loadingMsg" class="mt-4 flex items-center justify-center text-slate-500 text-sm">
+                    <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Loading database...
+                </div>
+                
+                <div id="errorMsg" class="hidden mt-4 p-3 bg-red-50 text-red-700 text-sm rounded-lg text-center"></div>
+
+                <!-- Manual Upload Fallback (Hidden by default, shows if fetch fails) -->
+                <div id="manualLoadSection" class="hidden mt-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                    <p class="text-amber-800 text-sm font-medium mb-2 text-center">Auto-load failed. Please select 'fsb.csv' manually:</p>
+                    <input type="file" id="csvFileInput" accept=".csv" class="block w-full text-sm text-slate-500
+                        file:mr-4 file:py-2 file:px-4
+                        file:rounded-full file:border-0
+                        file:text-sm file:font-semibold
+                        file:bg-blue-50 file:text-blue-700
+                        hover:file:bg-blue-100 cursor-pointer
+                    "/>
+                </div>
+            </div>
+
+            <!-- Results Section -->
+            <div id="resultsSection" class="hidden bg-white rounded-xl shadow-lg overflow-hidden transition-all duration-500">
+                <div class="p-6 border-b border-slate-100 bg-slate-50">
+                    <h2 class="text-xl font-bold text-slate-800 flex items-center">
+                        Peers for: <span id="selectedFirmName" class="ml-2 text-blue-700"></span>
+                    </h2>
+                </div>
+                
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 text-slate-600 text-sm uppercase tracking-wider">
+                                <th class="p-4 font-semibold border-b border-slate-200 text-center w-20">Rank</th>
+                                <th class="p-4 font-semibold border-b border-slate-200">Peer Company</th>
+                                <th class="p-4 font-semibold border-b border-slate-200 text-right">FSB Score</th>
+                            </tr>
+                        </thead>
+                        <tbody id="peersTableBody" class="divide-y divide-slate-100 text-slate-700">
+                            <!-- Rows inserted via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200 mt-auto">
+        <div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+            <p class="text-center text-slate-400 text-sm">
+                &copy; <script>document.write(new Date().getFullYear())</script> Firm Benchmarking. All rights reserved.
+            </p>
+        </div>
+    </footer>
+
+    <!-- Logic -->
+    <script>
+        const firmData = {};
+        let companyNames = [];
+
+        const input = document.getElementById('companyInput');
+        const suggestionsList = document.getElementById('suggestionsList');
+        const loadingMsg = document.getElementById('loadingMsg');
+        const errorMsg = document.getElementById('errorMsg');
+        const resultsSection = document.getElementById('resultsSection');
+        const selectedFirmName = document.getElementById('selectedFirmName');
+        const peersTableBody = document.getElementById('peersTableBody');
+        const manualLoadSection = document.getElementById('manualLoadSection');
+        const csvFileInput = document.getElementById('csvFileInput');
+
+        // Initialize: Try fetching automatically
+        window.addEventListener('DOMContentLoaded', () => {
+            initDataLoad();
+        });
+
+        async function initDataLoad() {
+            try {
+                const response = await fetch('./fsb.csv');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const csvText = await response.text();
+                
+                if (csvText.trim().startsWith('<!DOCTYPE') || csvText.trim().startsWith('<html')) {
+                    throw new Error("Received HTML instead of CSV");
+                }
+
+                parseCSV(csvText);
+
+            } catch (err) {
+                console.warn("Auto-load failed:", err);
+                loadingMsg.style.display = 'none';
+                manualLoadSection.classList.remove('hidden');
+            }
+        }
+
+        // Manual File Upload Handler
+        csvFileInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                loadingMsg.style.display = 'flex';
+                loadingMsg.textContent = "Parsing file...";
+                manualLoadSection.classList.add('hidden');
+                
+                Papa.parse(file, {
+                    header: true,
+                    skipEmptyLines: true,
+                    complete: function(results) {
+                        processData(results.data);
+                        enableSearch();
+                    },
+                    error: function(err) {
+                        showError("Error parsing file.");
+                    }
+                });
+            }
+        });
+
+        function parseCSV(csvText) {
+            Papa.parse(csvText, {
+                header: true,
+                skipEmptyLines: true,
+                complete: function(results) {
+                    processData(results.data);
+                    enableSearch();
+                },
+                error: function(err) {
+                    loadingMsg.style.display = 'none';
+                    manualLoadSection.classList.remove('hidden');
+                }
+            });
+        }
+
+        function processData(data) {
+            // Reset
+            for (let key in firmData) delete firmData[key];
+            companyNames = [];
+
+            data.forEach(row => {
+                // Columns: conm, conm_peers, fsbrank, fsb
+                const company = row.conm;
+                const peer = row.conm_peers;
+                const rank = parseInt(row.fsbrank);
+                const fsb = parseFloat(row.fsb); // Parse as float for consistent formatting
+
+                if (company && peer && rank) {
+                    if (!firmData[company]) {
+                        firmData[company] = [];
+                    }
+                    firmData[company].push({
+                        peer: peer,
+                        rank: rank,
+                        fsb: fsb
+                    });
+                }
+            });
+
+            companyNames = Object.keys(firmData).sort();
+            console.log(`Loaded ${companyNames.length} unique companies.`);
+        }
+
+        function enableSearch() {
+            loadingMsg.style.display = 'none';
+            input.disabled = false;
+            input.focus();
+        }
+
+        function showError(msg) {
+            loadingMsg.style.display = 'none';
+            errorMsg.textContent = msg;
+            errorMsg.classList.remove('hidden');
+        }
+
+        // Search Logic
+        input.addEventListener('keyup', function() {
+            const query = this.value.toUpperCase();
+            suggestionsList.innerHTML = '';
+            
+            if (query.length < 2) {
+                suggestionsList.classList.add('hidden');
+                return;
+            }
+
+            const matches = companyNames.filter(name => name.includes(query)).slice(0, 10);
+
+            if (matches.length > 0) {
+                matches.forEach(match => {
+                    const div = document.createElement('div');
+                    div.className = 'p-3 hover:bg-blue-50 cursor-pointer text-slate-700 transition-colors border-b border-slate-50 last:border-0';
+                    div.textContent = match;
+                    div.addEventListener('click', () => {
+                        selectCompany(match);
+                    });
+                    suggestionsList.appendChild(div);
+                });
+                suggestionsList.classList.remove('hidden');
+            } else {
+                suggestionsList.classList.add('hidden');
+            }
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            if (e.target !== input && e.target !== suggestionsList) {
+                suggestionsList.classList.add('hidden');
+            }
+        });
+
+        function selectCompany(companyName) {
+            input.value = companyName;
+            suggestionsList.classList.add('hidden');
+            selectedFirmName.textContent = companyName;
+
+            const peers = firmData[companyName] || [];
+            peers.sort((a, b) => a.rank - b.rank);
+
+            peersTableBody.innerHTML = '';
+            
+            if (peers.length === 0) {
+                peersTableBody.innerHTML = `
+                    <tr>
+                        <td colspan="3" class="p-6 text-center text-slate-500 italic">No peers found in database.</td>
+                    </tr>`;
+            } else {
+                peers.slice(0, 10).forEach(p => {
+                    const tr = document.createElement('tr');
+                    tr.className = "hover:bg-slate-50 transition-colors";
+                    // Format score to 3 decimals if it's a number
+                    const scoreDisplay = typeof p.fsb === 'number' ? p.fsb.toFixed(3) : p.fsb;
+                    
+                    tr.innerHTML = `
+                        <td class="p-4 text-center">
+                            <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-slate-200 text-slate-700 font-bold text-sm">
+                                ${p.rank}
+                            </span>
+                        </td>
+                        <td class="p-4 font-medium text-slate-800">${p.peer}</td>
+                        <td class="p-4 text-right font-mono text-blue-600 font-medium">${scoreDisplay}</td>
+                    `;
+                    peersTableBody.appendChild(tr);
+                });
+            }
+
+            resultsSection.classList.remove('hidden');
+            resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    </script>
+</body>
+</html>
