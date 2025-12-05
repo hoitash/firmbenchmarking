@@ -64,7 +64,7 @@
             </h1>
             <p class="text-lg text-slate-600 max-w-2xl mx-auto">
                 Search for a company below to view its top 10 comparable firms. 
-                Use the <strong>Domestic</strong> tool for local peers (FSB) or the <strong>Global</strong> tool for international peers (IFSB).
+                Use the <strong>US</strong> tool for domestic peers (FSB) or the <strong>Global</strong> tool for international peers (IFSB).
             </p>
         </div>
 
@@ -81,7 +81,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                             </svg>
                         </span>
-                        Find Domestic Peers
+                        Find Peers for US firms
                     </h2>
                     <p class="text-sm text-slate-500 mt-2 ml-1">Based on FSB Data</p>
                 </div>
@@ -96,7 +96,7 @@
                         </div>
                         <input type="text" id="domesticInput" 
                             class="block w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none disabled:opacity-60 disabled:cursor-not-allowed" 
-                            placeholder="Type domestic company name..." 
+                            placeholder="Type US company name..." 
                             autocomplete="off" 
                             disabled>
                         
@@ -153,7 +153,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                         </span>
-                        Find Global Peers
+                        Find Peers for Global firms
                     </h2>
                     <p class="text-sm text-slate-500 mt-2 ml-1">Based on IFSB Data</p>
                 </div>
@@ -335,7 +335,7 @@
                             peer: peer,
                             rank: parseInt(row.ifsbrank),
                             score: parseFloat(row.ifsb),
-                            country: row.loc // Country Code
+                            country: row.loc_peers // Changed from row.loc to row.loc_peers
                         });
                     }
                 }
@@ -426,7 +426,7 @@
                             <td class="p-3 text-right font-mono text-blue-600 font-medium">${scoreDisplay}</td>
                         `;
                     } else {
-                        // Global columns: Rank | Peer | Country | IFSB
+                        // Global columns: Rank | Peer | Country (loc_peers) | IFSB
                         tr.innerHTML = `
                             <td class="p-3 text-center"><span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-indigo-100 text-indigo-700 font-bold text-xs">${p.rank}</span></td>
                             <td class="p-3 font-medium text-slate-800">${p.peer}</td>
